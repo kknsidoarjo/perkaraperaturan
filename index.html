@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        /* Styling untuk search control yang lebih menarik */
+        .custom-search {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            padding: 5px;
+        }
+        .custom-search .search-input {
+            width: 250px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .custom-search .search-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 8px 12px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .custom-search .search-button:hover {
+            background: #45a049;
+        }
+        .search-tooltip {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 5px 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .search-tooltip a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        </style>
+        <title>WebGIS Perkara Pertanahan Kabupaten Sidoarjo</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="data/bidang_2.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        
+        // add class to format popup if it contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            if (tempDiv.querySelector('td img')) {
+                popup._contentNode.classList.add('media');
+                    // Delay to force the redraw
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+            map.setMaxBounds(map.getBounds());
+        }
+        map.createPane('pane_GoogleTerrainHybrid_0');
+        map.getPane('pane_GoogleTerrainHybrid_0').style.zIndex = 400;
+        var layer_GoogleTerrainHybrid_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleTerrainHybrid_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_GoogleTerrainHybrid_0;
+        map.addLayer(layer_GoogleTerrainHybrid_0);
+        map.createPane('pane_GoogleSatelliteHybrid_1');
+        map.getPane('pane_GoogleSatelliteHybrid_1').style.zIndex = 401;
+        var layer_GoogleSatelliteHybrid_1 = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatelliteHybrid_1',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_GoogleSatelliteHybrid_1;
+        
+        function pop_bidang_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">No Perkara</th>\
+                        <td class="visible-with-data" id="No Perkara">' + (feature.properties['No Perkara'] !== null ? autolinker.link(String(feature.properties['No Perkara']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Sertipikat</th>\
+                        <td class="visible-with-data" id="Sertipikat">' + (feature.properties['Sertipikat'] !== null ? autolinker.link(String(feature.properties['Sertipikat']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Status</th>\
+                        <td class="visible-with-data" id="Status">' + (feature.properties['Status'] !== null ? autolinker.link(String(feature.properties['Status']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Desa</th>\
+                        <td class="visible-with-data" id="Desa">' + (feature.properties['Desa'] !== null ? autolinker.link(String(feature.properties['Desa']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Kecamatan</th>\
+                        <td class="visible-with-data" id="Kecamatan">' + (feature.properties['Kecamatan'] !== null ? autolinker.link(String(feature.properties['Kecamatan']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+            layer.on('popupopen', function(e) {
+                addClassToPopupIfMedia(content, e.popup);
+            });
+            layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_bidang_2_0() {
+            return {
+                pane: 'pane_bidang_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(183,72,75,1.0)',
+                interactive: true,
+            }
+        }
+        
+        // Fungsi untuk highlight bidang yang ditemukan
+        function highlightFoundFeature(layer) {
+            layer.setStyle({
+                fillColor: '#4CAF50',
+                color: '#4CAF50',
+                fillOpacity: 0.8,
+                weight: 3
+            });
+            if (!map.getBounds().contains(layer.getBounds())) {
+                map.fitBounds(layer.getBounds(), {padding: [50, 50]});
+            }
+            layer.openPopup();
+        }
+        
+        map.createPane('pane_bidang_2');
+        map.getPane('pane_bidang_2').style.zIndex = 402;
+        map.getPane('pane_bidang_2').style['mix-blend-mode'] = 'normal';
+        var layer_bidang_2 = new L.geoJson(json_bidang_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_bidang_2',
+            layerName: 'layer_bidang_2',
+            pane: 'pane_bidang_2',
+            onEachFeature: pop_bidang_2,
+            style: style_bidang_2_0,
+        });
+        bounds_group.addLayer(layer_bidang_2);
+        map.addLayer(layer_bidang_2);
+        
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        
+        var overlaysTree = [
+            {label: '<img src="legend/bidang_2.png" /> bidang', layer: layer_bidang_2},
+            {label: "Google Satellite Hybrid", layer: layer_GoogleSatelliteHybrid_1, radioGroup: 'bm' },
+            {label: "Google Terrain Hybrid", layer: layer_GoogleTerrainHybrid_0, radioGroup: 'bm' },]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            collapsed: false, 
+        });
+        lay.addTo(map);
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            function newLayersListHeight() {
+                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
+                if (layerScrollbarElement) {
+                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
+                    var originalHeight = layersListElement.style.height 
+                        || window.getComputedStyle(layersListElement).height;
+                    var newHeight = parseFloat(originalHeight) - 50;
+                    layersListElement.style.height = newHeight + 'px';
+                }
+            }
+            var isLayersListExpanded = true;
+            var controlLayersElement = document.querySelector('.leaflet-control-layers');
+            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+            
+            toggleLayerControl.addEventListener('click', function() {
+                if (isLayersListExpanded) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                } else {
+                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                }
+                isLayersListExpanded = !isLayersListExpanded;
+                newLayersListHeight()
+            }); 
+            
+            if (controlLayersElement) {
+                controlLayersElement.addEventListener('click', function(event) {
+                    var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
+                    if (toggleLayerHeaderPointer) {
+                        newLayersListHeight();
+                    }
+                });
+            }
+            
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            
+            var isSmallScreen = window.innerWidth < 650;
+            if (isSmallScreen) {
+                setTimeout(function() {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                    isLayersListExpanded = !isLayersListExpanded;
+                }, 500);
+            }  
+        });       
+        
+        setBounds();
+        
+        // ========== FITUR PENCARIAN YANG DITINGKATKAN ==========
+        
+        // Buat custom search control
+        var CustomSearchControl = L.Control.extend({
+            options: {
+                position: 'topright',
+                placeholder: 'Cari Nomor Perkara...',
+                tooltip: 'Masukkan nomor perkara untuk mencari bidang tanah'
+            },
+            
+            onAdd: function(map) {
+                var container = L.DomUtil.create('div', 'custom-search');
+                
+                // Input field
+                this._input = L.DomUtil.create('input', 'search-input', container);
+                this._input.type = 'text';
+                this._input.placeholder = this.options.placeholder;
+                this._input.title = this.options.tooltip;
+                
+                // Search button
+                this._button = L.DomUtil.create('button', 'search-button', container);
+                this._button.innerHTML = '<i class="fa fa-search"></i>';
+                this._button.title = 'Cari';
+                
+                // Tooltip
+                this._tooltip = L.DomUtil.create('div', 'search-tooltip', container);
+                this._tooltip.style.display = 'none';
+                this._tooltip.innerHTML = this.options.tooltip;
+                
+                // Event listeners
+                L.DomEvent.on(this._input, 'keypress', this._onKeyPress, this);
+                L.DomEvent.on(this._button, 'click', this._search, this);
+                L.DomEvent.on(this._input, 'focus', this._showTooltip, this);
+                L.DomEvent.on(this._input, 'blur', this._hideTooltip, this);
+                
+                L.DomEvent.disableClickPropagation(container);
+                return container;
+            },
+            
+            _onKeyPress: function(e) {
+                if (e.keyCode === 13) {
+                    this._search();
+                }
+            },
+            
+            _showTooltip: function() {
+                this._tooltip.style.display = 'block';
+            },
+            
+            _hideTooltip: function() {
+                this._tooltip.style.display = 'none';
+            },
+            
+            _search: function() {
+                var searchValue = this._input.value.trim();
+                if (!searchValue) return;
+                
+                var found = false;
+                layer_bidang_2.eachLayer(function(layer) {
+                    if (layer.feature.properties['No Perkara'] && 
+                        layer.feature.properties['No Perkara'].toString().toLowerCase().includes(searchValue.toLowerCase())) {
+                        highlightFoundFeature(layer);
+                        found = true;
+                    }
+                });
+                
+                if (!found) {
+                    alert('Nomor perkara "' + searchValue + '" tidak ditemukan.');
+                }
+            }
+        });
+        
+        // Tambahkan custom search control ke peta
+        var customSearch = new CustomSearchControl();
+        map.addControl(customSearch);
+        
+        // Tambahkan juga search control default untuk alternatif
+        var defaultSearch = new L.Control.Search({
+            layer: layer_bidang_2,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'No Perkara',
+            position: 'topright',
+            textErr: 'Nomor perkara tidak ditemukan',
+            textPlaceholder: 'Cari nomor perkara...',
+            marker: false
+        });
+        
+        defaultSearch.on('search:locationfound', function(e) {
+            highlightFoundFeature(e.layer);
+        });
+        
+        map.addControl(defaultSearch);
+        
+        // Sesuaikan tampilan default search control
+        document.querySelector('.search-button').className += ' fa fa-search';
+        document.querySelector('.search-input').style.width = '200px';
+        document.querySelector('.search-input').style.padding = '8px';
+        </script>
+    </body>
+</html>
