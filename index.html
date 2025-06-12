@@ -1,452 +1,1293 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
-        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
-        <link rel="stylesheet" href="css/qgis2web.css">
-        <link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link rel="stylesheet" href="css/leaflet-search.css">
-        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
-        <link rel="stylesheet" href="css/leaflet-measure.css">
-        <style>
-        html, body, #map {
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Hukum Pertanahan | Sengketa & Konflik Tanah</title>
+    <meta name="description" content="Database peraturan terkait sengketa, konflik, dan perkara pertanahan di Indonesia">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.7;
+            color: var(--dark);
+            background-color: #f9f9f9;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #1a252f);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+        
+        .logo-text h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+        }
+        
+        nav a:hover, nav a.active {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .hero {
+            background: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80') no-repeat center center/cover;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            color: white;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            padding: 0;
-            margin: 0;
+            background: rgba(0,0,0,0.6);
         }
-        /* Styling untuk search control yang lebih menarik */
-        .custom-search {
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 700px;
+            opacity: 0.9;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .search-filter {
             background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            padding: 5px;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
         }
-        .custom-search .search-input {
-            width: 250px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 14px;
+        
+        .search-box-container {
+            position: relative;
+            margin-bottom: 1.5rem;
         }
-        .custom-search .search-button {
-            background: #4CAF50;
-            color: white;
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: #f8f9fa;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            background-color: white;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        
+        .filter-title {
+            width: 100%;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .filter-btn {
+            background-color: var(--light);
             border: none;
-            border-radius: 3px;
-            padding: 8px 12px;
-            margin-left: 5px;
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .custom-search .search-button:hover {
-            background: #45a049;
+        
+        .filter-btn:hover {
+            background-color: #d6eaf8;
         }
-        .search-tooltip {
-            background-color: #fff;
+        
+        .filter-btn.active {
+            background-color: var(--secondary);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .regulation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .regulation-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .regulation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.2rem;
+            position: relative;
+        }
+        
+        .card-header h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .card-header .regulation-number {
+            font-weight: 500;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .regulation-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .meta-item {
+            background: #f0f8ff;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .regulation-about {
+            margin-bottom: 1.5rem;
+        }
+        
+        .regulation-about h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .regulation-about p {
+            font-size: 0.9rem;
+        }
+        
+        .regulation-content {
+            margin-bottom: 1.5rem;
+        }
+        
+        .regulation-content h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .regulation-content ul {
+            list-style-position: inside;
+            padding-left: 5px;
+        }
+        
+        .regulation-content li {
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 1.5rem 1.5rem;
+            gap: 10px;
+        }
+        
+        .view-btn, .download-btn {
+            padding: 8px 15px;
             border-radius: 5px;
-            padding: 5px 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        .search-tooltip a {
-            color: #4CAF50;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            flex: 1;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .view-btn {
+            background: var(--light);
+            color: var(--dark);
+            border: 1px solid #ddd;
+        }
+        
+        .view-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .download-btn {
+            background: var(--secondary);
+            color: white;
+            border: 1px solid var(--secondary);
+        }
+        
+        .download-btn:hover {
+            background: #2980b9;
+        }
+        
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            color: #bdc3c7;
+            margin-bottom: 1rem;
+        }
+        
+        .no-results h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .no-results p {
+            color: #7f8c8d;
+        }
+        
+        /* Modal View Regulation */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            animation: modalopen 0.4s;
+        }
+        
+        @keyframes modalopen {
+            from {opacity: 0; transform: translateY(-50px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h2 {
+            color: var(--primary);
+        }
+        
+        .close-modal {
+            color: #aaa;
+            font-size: 1.8rem;
             font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        </style>
-        <title>WebGIS Perkara Pertanahan Kabupaten Sidoarjo</title>
-    </head>
-    <body>
-        <div id="map">
+        
+        .close-modal:hover {
+            color: var(--accent);
+        }
+        
+        .modal-body {
+            line-height: 1.8;
+        }
+        
+        .modal-body h3 {
+            margin: 1.5rem 0 1rem;
+            color: var(--primary);
+        }
+        
+        .modal-body ul {
+            margin-left: 1.5rem;
+        }
+        
+        .modal-body li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .modal-footer {
+            margin-top: 2rem;
+            text-align: right;
+        }
+        
+        footer {
+            background: var(--primary);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-column h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--secondary);
+        }
+        
+        .footer-column p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.6rem;
+        }
+        
+        .footer-links a {
+            color: white;
+            opacity: 0.8;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+            color: var(--secondary);
+            padding-left: 5px;
+        }
+        
+        .footer-links i {
+            font-size: 0.7rem;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+            }
+            
+            .hero h2 {
+                font-size: 2rem;
+            }
+            
+            .regulation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-section {
+                justify-content: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card-footer {
+                flex-direction: column;
+            }
+            
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-landmark"></i>
+                <div class="logo-text">
+                    <h1>Kumpulan Peraturan SKP Pertahanan</h1>
+                    <p>KKNP-PTLP STPN Kantah Sidoarjo 2025</p>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Kembali</a></li>
+                </ul>
+            </nav>
         </div>
-        <script src="js/qgis2web_expressions.js"></script>
-        <script src="js/leaflet.js"></script>
-        <script src="js/L.Control.Layers.Tree.min.js"></script>
-        <script src="js/L.Control.Locate.min.js"></script>
-        <script src="js/leaflet.rotatedMarker.js"></script>
-        <script src="js/leaflet.pattern.js"></script>
-        <script src="js/leaflet-hash.js"></script>
-        <script src="js/Autolinker.min.js"></script>
-        <script src="js/rbush.min.js"></script>
-        <script src="js/labelgun.min.js"></script>
-        <script src="js/labels.js"></script>
-        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
-        <script src="js/leaflet-measure.js"></script>
-        <script src="js/leaflet-search.js"></script>
-        <script src="data/bidang_2.js"></script>
-        <script>
-        var highlightLayer;
-        function highlightFeature(e) {
-            highlightLayer = e.target;
-
-            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
-              highlightLayer.setStyle({
-                color: '#ffff00',
-              });
-            } else {
-              highlightLayer.setStyle({
-                fillColor: '#ffff00',
-                fillOpacity: 1
-              });
-            }
-            highlightLayer.openPopup();
-        }
-        var map = L.map('map', {
-            zoomControl:false, maxZoom:28, minZoom:1
-        })
-        var hash = new L.Hash(map);
-        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
-        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
-        
-        // remove popup's row if "visible-with-data"
-        function removeEmptyRowsFromPopupContent(content, feature) {
-         var tempDiv = document.createElement('div');
-         tempDiv.innerHTML = content;
-         var rows = tempDiv.querySelectorAll('tr');
-         for (var i = 0; i < rows.length; i++) {
-             var td = rows[i].querySelector('td.visible-with-data');
-             var key = td ? td.id : '';
-             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
-                 rows[i].parentNode.removeChild(rows[i]);
-             }
-         }
-         return tempDiv.innerHTML;
-        }
-        
-        // add class to format popup if it contains media
-        function addClassToPopupIfMedia(content, popup) {
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-            if (tempDiv.querySelector('td img')) {
-                popup._contentNode.classList.add('media');
-                    // Delay to force the redraw
-                    setTimeout(function() {
-                        popup.update();
-                    }, 10);
-            } else {
-                popup._contentNode.classList.remove('media');
-            }
-        }
-        
-        var zoomControl = L.control.zoom({
-            position: 'topleft'
-        }).addTo(map);
-        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
-        var measureControl = new L.Control.Measure({
-            position: 'topleft',
-            primaryLengthUnit: 'meters',
-            secondaryLengthUnit: 'kilometers',
-            primaryAreaUnit: 'sqmeters',
-            secondaryAreaUnit: 'hectares'
-        });
-        measureControl.addTo(map);
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
-        var bounds_group = new L.featureGroup([]);
-        function setBounds() {
-            if (bounds_group.getLayers().length) {
-                map.fitBounds(bounds_group.getBounds());
-            }
-            map.setMaxBounds(map.getBounds());
-        }
-        map.createPane('pane_GoogleTerrainHybrid_0');
-        map.getPane('pane_GoogleTerrainHybrid_0').style.zIndex = 400;
-        var layer_GoogleTerrainHybrid_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-            pane: 'pane_GoogleTerrainHybrid_0',
-            opacity: 1.0,
-            attribution: '',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 19
-        });
-        layer_GoogleTerrainHybrid_0;
-        map.addLayer(layer_GoogleTerrainHybrid_0);
-        map.createPane('pane_GoogleSatelliteHybrid_1');
-        map.getPane('pane_GoogleSatelliteHybrid_1').style.zIndex = 401;
-        var layer_GoogleSatelliteHybrid_1 = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-            pane: 'pane_GoogleSatelliteHybrid_1',
-            opacity: 1.0,
-            attribution: '',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 19
-        });
-        layer_GoogleSatelliteHybrid_1;
-        
-        function pop_bidang_2(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    for (var i in e.target._eventParents) {
-                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
-                            e.target._eventParents[i].resetStyle(e.target);
-                        }
-                    }
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var popupContent = '<table>\
-                    <tr>\
-                        <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(String(feature.properties['id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">No Perkara</th>\
-                        <td class="visible-with-data" id="No Perkara">' + (feature.properties['No Perkara'] !== null ? autolinker.link(String(feature.properties['No Perkara']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Sertipikat</th>\
-                        <td class="visible-with-data" id="Sertipikat">' + (feature.properties['Sertipikat'] !== null ? autolinker.link(String(feature.properties['Sertipikat']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Status</th>\
-                        <td class="visible-with-data" id="Status">' + (feature.properties['Status'] !== null ? autolinker.link(String(feature.properties['Status']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Desa</th>\
-                        <td class="visible-with-data" id="Desa">' + (feature.properties['Desa'] !== null ? autolinker.link(String(feature.properties['Desa']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Kecamatan</th>\
-                        <td class="visible-with-data" id="Kecamatan">' + (feature.properties['Kecamatan'] !== null ? autolinker.link(String(feature.properties['Kecamatan']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
-                    </tr>\
-                </table>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-            layer.on('popupopen', function(e) {
-                addClassToPopupIfMedia(content, e.popup);
-            });
-            layer.bindPopup(content, { maxHeight: 400 });
-        }
-
-        function style_bidang_2_0() {
-            return {
-                pane: 'pane_bidang_2',
-                opacity: 1,
-                color: 'rgba(35,35,35,1.0)',
-                dashArray: '',
-                lineCap: 'butt',
-                lineJoin: 'miter',
-                weight: 1.0, 
-                fill: true,
-                fillOpacity: 1,
-                fillColor: 'rgba(183,72,75,1.0)',
-                interactive: true,
-            }
-        }
-        
-        // Fungsi untuk highlight bidang yang ditemukan
-        function highlightFoundFeature(layer) {
-            layer.setStyle({
-                fillColor: '#4CAF50',
-                color: '#4CAF50',
-                fillOpacity: 0.8,
-                weight: 3
-            });
-            if (!map.getBounds().contains(layer.getBounds())) {
-                map.fitBounds(layer.getBounds(), {padding: [50, 50]});
-            }
-            layer.openPopup();
-        }
-        
-        map.createPane('pane_bidang_2');
-        map.getPane('pane_bidang_2').style.zIndex = 402;
-        map.getPane('pane_bidang_2').style['mix-blend-mode'] = 'normal';
-        var layer_bidang_2 = new L.geoJson(json_bidang_2, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_bidang_2',
-            layerName: 'layer_bidang_2',
-            pane: 'pane_bidang_2',
-            onEachFeature: pop_bidang_2,
-            style: style_bidang_2_0,
-        });
-        bounds_group.addLayer(layer_bidang_2);
-        map.addLayer(layer_bidang_2);
-        
-        var osmGeocoder = new L.Control.Geocoder({
-            collapsed: true,
-            position: 'topleft',
-            text: 'Search',
-            title: 'Testing'
-        }).addTo(map);
-        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
-        .className += ' fa fa-search';
-        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
-        .title += 'Search for a place';
-        
-        var overlaysTree = [
-            {label: '<img src="legend/bidang_2.png" /> bidang', layer: layer_bidang_2},
-            {label: "Google Satellite Hybrid", layer: layer_GoogleSatelliteHybrid_1, radioGroup: 'bm' },
-            {label: "Google Terrain Hybrid", layer: layer_GoogleTerrainHybrid_0, radioGroup: 'bm' },]
-        var lay = L.control.layers.tree(null, overlaysTree,{
-            collapsed: false, 
-        });
-        lay.addTo(map);
-        
-        document.addEventListener("DOMContentLoaded", function() {
-            function newLayersListHeight() {
-                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
-                if (layerScrollbarElement) {
-                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
-                    var originalHeight = layersListElement.style.height 
-                        || window.getComputedStyle(layersListElement).height;
-                    var newHeight = parseFloat(originalHeight) - 50;
-                    layersListElement.style.height = newHeight + 'px';
-                }
-            }
-            var isLayersListExpanded = true;
-            var controlLayersElement = document.querySelector('.leaflet-control-layers');
-            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+    </header>
+    
+    <section class="hero">
+        <div class="hero-content">
+            <h2>Database Peraturan Pertanahan</h2>
+            <p>Temukan semua peraturan terkait sengketa, konflik, dan perkara pertanahan dalam satu platform terintegrasi</p>
+        </div>
+    </section>
+    
+    <main class="container">
+        <div class="search-filter">
+            <div class="search-box-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-box" placeholder="Cari peraturan, nomor, atau tahun..." id="searchInput">
+            </div>
             
-            toggleLayerControl.addEventListener('click', function() {
-                if (isLayersListExpanded) {
-                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+            <div class="filter-section">
+                <p class="filter-title">Filter Kategori:</p>
+                <button class="filter-btn active" data-filter="all">
+                    <i class="fas fa-layer-group"></i> Semua
+                </button>
+                <button class="filter-btn" data-filter="uu">
+                    <i class="fas fa-file-alt"></i> UU
+                </button>
+                <button class="filter-btn" data-filter="pp">
+                    <i class="fas fa-file-contract"></i> PP
+                </button>
+                <button class="filter-btn" data-filter="permen">
+                    <i class="fas fa-file-signature"></i> Permen
+                </button>
+                <button class="filter-btn" data-filter="sengketa">
+                    <i class="fas fa-gavel"></i> Sengketa
+                </button>
+                <button class="filter-btn" data-filter="konflik">
+                    <i class="fas fa-exclamation-triangle"></i> Konflik
+                </button>
+            </div>
+        </div>
+        
+        <div class="regulation-grid" id="regulationGrid">
+            <!-- Undang-Undang No. 5 Tahun 1960 (Highest hierarchy) -->
+            <div class="regulation-card" data-categories="uu sengketa">
+                <div class="card-header">
+                    <h3>Peraturan Dasar Pokok-Pokok Agraria</h3>
+                    <p class="regulation-number">Undang-Undang No. 5 Tahun 1960</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-balance-scale"></i> Undang-Undang</span>
+                        <span class="meta-item"><i class="fas fa-gavel"></i> Sengketa</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Landasan hukum utama dalam penyelesaian sengketa pertanahan di Indonesia (UUPA).</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Dasar hukum agraria nasional</li>
+                            <li>Pengakuan hak-hak atas tanah (Hak Milik, HGU, HGB, dll)</li>
+                            <li>Ketentuan tentang landreform</li>
+                            <li>Penyelesaian sengketa tanah</li>
+                            <li>Kewenangan negara dalam pengaturan tanah</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="uu5-1960">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/uu_no_5_1960.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Undang-Undang No. 7 Tahun 2012 -->
+            <div class="regulation-card" data-categories="uu konflik">
+                <div class="card-header">
+                    <h3>Penanganan Konflik Sosial</h3>
+                    <p class="regulation-number">Undang-Undang No. 7 Tahun 2012</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-balance-scale"></i> Undang-Undang</span>
+                        <span class="meta-item"><i class="fas fa-exclamation-triangle"></i> Konflik</span>
+                        <span class="meta-item"><i class="fas fa-people-arrows"></i> Sosial</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Penanganan konflik sosial termasuk yang bersumber dari sengketa pertanahan.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi (Relevan dengan Pertanahan):</h4>
+                        <ul>
+                            <li>Pencegahan konflik berbasis tanah</li>
+                            <li>Mekanisme penyelesaian konflik sosial</li>
+                            <li>Peran pemerintah daerah dalam resolusi konflik</li>
+                            <li>Mediasi dan rekonsiliasi</li>
+                            <li>Pemulihan pasca konflik</li>
+                            <li>Perlindungan korban konflik pertanahan</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="uu7-2012">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/uu_no_7_2012.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Undang-Undang No. 2 Tahun 2012 -->
+            <div class="regulation-card" data-categories="uu sengketa">
+                <div class="card-header">
+                    <h3>Pengadaan Tanah untuk Pembangunan</h3>
+                    <p class="regulation-number">Undang-Undang No. 2 Tahun 2012</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-balance-scale"></i> Undang-Undang</span>
+                        <span class="meta-item"><i class="fas fa-gavel"></i> Sengketa</span>
+                        <span class="meta-item"><i class="fas fa-city"></i> Pembangunan</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Pengaturan pengadaan tanah yang sering menjadi sumber sengketa pertanahan.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Prinsip pengadaan tanah yang adil</li>
+                            <li>Kompensasi bagi pemilik tanah</li>
+                            <li>Mekanisme musyawarah dalam pengadaan tanah</li>
+                            <li>Penyelesaian sengketa pengadaan tanah</li>
+                            <li>Peran pemerintah daerah dalam pengadaan tanah</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="uu2-2012">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/uu_no_2_2012.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Undang-Undang No. 6 Tahun 2023 -->
+            <div class="regulation-card" data-categories="uu sengketa">
+                <div class="card-header">
+                    <h3>Cipta Kerja</h3>
+                    <p class="regulation-number">Undang-Undang No. 6 Tahun 2023</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-balance-scale"></i> Undang-Undang</span>
+                        <span class="meta-item"><i class="fas fa-gavel"></i> Sengketa</span>
+                        <span class="meta-item"><i class="fas fa-briefcase"></i> Investasi</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Pengaturan pertanahan dalam kerangka undang-undang cipta kerja.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi (Aspek Pertanahan):</h4>
+                        <ul>
+                            <li>Penyederhanaan perizinan pertanahan</li>
+                            <li>Percepatan proses pengadaan tanah</li>
+                            <li>Penyelesaian sengketa tanah strategis</li>
+                            <li>Harmonisasi peraturan pertanahan</li>
+                            <li>Perlindungan hak masyarakat adat</li>
+                            <li>Digitalisasi layanan pertanahan</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="uu6-2023">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/uu_no_6_2023.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Peraturan Pemerintah No. 24 Tahun 1997 -->
+            <div class="regulation-card" data-categories="pp konflik">
+                <div class="card-header">
+                    <h3>Pendaftaran Tanah</h3>
+                    <p class="regulation-number">Peraturan Pemerintah No. 24 Tahun 1997</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-file-contract"></i> Peraturan Pemerintah</span>
+                        <span class="meta-item"><i class="fas fa-exclamation-triangle"></i> Konflik</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Pengaturan sistem pendaftaran tanah untuk mencegah konflik kepemilikan.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Tata cara pendaftaran tanah pertama kali</li>
+                            <li>Pendaftaran peralihan hak atas tanah</li>
+                            <li>Sistem buku tanah dan surat ukur</li>
+                            <li>Pencegahan konflik melalui sertipikat tanah</li>
+                            <li>Kewajiban pendaftaran tanah</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="pp24-1997">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/pp_no_24_1997.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Peraturan Pemerintah No. 18 Tahun 2021 -->
+            <div class="regulation-card" data-categories="pp konflik">
+                <div class="card-header">
+                    <h3>Hak Pengelolaan dan Pendaftaran Tanah</h3>
+                    <p class="regulation-number">Peraturan Pemerintah No. 18 Tahun 2021</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-file-contract"></i> Peraturan Pemerintah</span>
+                        <span class="meta-item"><i class="fas fa-exclamation-triangle"></i> Konflik</span>
+                        <span class="meta-item"><i class="fas fa-digital-tachograph"></i> Digital</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Peraturan terbaru tentang pendaftaran tanah untuk mencegah konflik.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Penyederhanaan prosedur pendaftaran tanah</li>
+                            <li>Pengaturan hak pengelolaan oleh negara</li>
+                            <li>Ketentuan tentang rumah susun</li>
+                            <li>Pencegahan konflik melalui sertipikat elektronik</li>
+                            <li>Penyelesaian klaim ganda atas tanah</li>
+                            <li>Integrasi sistem informasi pertanahan</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="pp18-2021">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/pp_no_18_2021.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Peraturan Menteri ATR/BPN No. 21 Tahun 2020 -->
+            <div class="regulation-card" data-categories="permen konflik">
+                <div class="card-header">
+                    <h3>Penanganan Konflik Pertanahan</h3>
+                    <p class="regulation-number">Peraturan Menteri ATR/BPN No. 21 Tahun 2020</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-file-signature"></i> Peraturan Menteri</span>
+                        <span class="meta-item"><i class="fas fa-exclamation-triangle"></i> Konflik</span>
+                        <span class="meta-item"><i class="fas fa-users"></i> Partisipatif</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Mekanisme penyelesaian konflik pertanahan secara partisipatif dan berkeadilan.</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Pendekatan penyelesaian konflik secara partisipatif</li>
+                            <li>Peran mediator dalam penyelesaian konflik</li>
+                            <li>Mekanisme pengaduan dan verifikasi</li>
+                            <li>Penyelesaian melalui musyawarah mufakat</li>
+                            <li>Penggunaan teknologi dalam resolusi konflik</li>
+                            <li>Tim khusus penanganan konflik strategis</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="permen21-2020">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/permen_atr_21_2020.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Peraturan Menteri ATR/BPN No.15 tahun 2024 -->
+            <div class="regulation-card" data-categories="permen sengketa konflik">
+                <div class="card-header">
+                    <h3>Pencegahan Kasus Pertanahan</h3>
+                    <p class="regulation-number">Peraturan Menteri ATR/BPN No.15 tahun 2024</p>
+                </div>
+                <div class="card-body">
+                    <div class="regulation-meta">
+                        <span class="meta-item"><i class="fas fa-balance-scale"></i> Peraturan Menteri</span>
+                        <span class="meta-item"><i class="fas fa-gavel"></i> Sengketa</span>
+                        <span class="meta-item"><i class="fas fa-city"></i> Konflik</span>
+                    </div>
+                    
+                    <div class="regulation-about">
+                        <h4>Tentang:</h4>
+                        <p>Pengaturan Strategi pencegahan kasus pertanahan</p>
+                    </div>
+                    
+                    <div class="regulation-content">
+                        <h4>Pokok-Pokok Isi:</h4>
+                        <ul>
+                            <li>Identifikasi kasus</li>
+                            <li>Pengkajian hasil identifikasi kasus</li>
+                            <li>Penyusunan rekomendasi</li>
+                            <li>Strategi pencegahan kasus pertanahan</li>
+                            <li>Pemantauan dan evaluasi</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="view-btn view-regulation" data-id="permen15-2024">
+                        <i class="far fa-eye"></i> Lihat
+                    </a>
+                    <a href="files/permen_atr_15_2024.pdf" class="download-btn" download>
+                        <i class="fas fa-download"></i> Unduh
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Modal View Regulation -->
+    <div id="regulationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Judul Peraturan</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="download-btn" id="modalDownloadBtn">
+                    <i class="fas fa-download"></i> Unduh Dokumen
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>Tentang Kami</h3>
+                <p>Portal Hukum Pertanahan merupakan platform yang menyediakan informasi peraturan terkait sengketa, konflik, dan perkara pertanahan di Indonesia. Dibuat untuk program Pengabdian kepada Masyarakat.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-column">
+                <h3>Kontak</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-map-marker-alt"></i> Jl. Lkr. Timur KM.5, Rangkah Kidul, Kec. Sidoarjo, Kabupaten Sidoarjo</a></li>
+                    <li><a href="#"><i class="fas fa-phone"></i> (62) 822-9179-6690</a></li>
+                    <li><a href="#"><i class="fas fa-envelope"></i> ainurcokal8@gmail.com</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2025 KKNP-PTLP STPN Kantah Sidoarjo. Seluruh hak cipta dilindungi.</p>
+        </div>
+    </footer>
+    
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elemen-elemen penting
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const regulationCards = document.querySelectorAll('.regulation-card');
+        const regulationGrid = document.getElementById('regulationGrid');
+        const searchInput = document.getElementById('searchInput');
+        const modal = document.getElementById('regulationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+        const closeModal = document.querySelector('.close-modal');
+        const viewButtons = document.querySelectorAll('.view-regulation');
+        
+        // Data peraturan untuk modal view
+        const regulationsData = {
+            'uu5-1960': {
+                title: 'Undang-Undang No. 5 Tahun 1960 tentang Peraturan Dasar Pokok-Pokok Agraria',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Undang-Undang Pokok Agraria (UUPA) ini merupakan landasan hukum utama dalam penyelesaian sengketa pertanahan di Indonesia.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Dasar hukum agraria nasional</strong>: Menegaskan bahwa semua hak atas tanah mempunyai fungsi sosial</li>
+                        <li><strong>Pengakuan hak-hak atas tanah</strong>: Mengatur tentang Hak Milik, Hak Guna Usaha (HGU), Hak Guna Bangunan (HGB), Hak Pakai, dan hak-hak lainnya</li>
+                        <li><strong>Ketentuan tentang landreform</strong>: Pembatasan penguasaan tanah, redistribusi tanah, dan konsolidasi tanah</li>
+                        <li><strong>Penyelesaian sengketa tanah</strong>: Mekanisme penyelesaian melalui pengadilan dan di luar pengadilan</li>
+                        <li><strong>Kewenangan negara</strong>: Hak mengatur dan menyelenggarakan peruntukan, penggunaan, persediaan dan pemeliharaan tanah</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Sengketa Tanah</h3>
+                    <p>UUPA menjadi dasar hukum utama dalam penyelesaian berbagai jenis sengketa pertanahan di Indonesia, termasuk sengketa kepemilikan, batas, dan pemanfaatan tanah.</p>
+                `,
+                downloadUrl: 'files/uu_no_5_1960.pdf'
+            },
+            'pp24-1997': {
+                title: 'Peraturan Pemerintah No. 24 Tahun 1997 tentang Pendaftaran Tanah',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Peraturan ini mengatur sistem pendaftaran tanah untuk mencegah konflik kepemilikan di Indonesia.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Tata cara pendaftaran tanah pertama kali</strong>: Prosedur pendaftaran tanah untuk pertama kalinya</li>
+                        <li><strong>Pendaftaran peralihan hak atas tanah</strong>: Mekanisme perubahan kepemilikan tanah</li>
+                        <li><strong>Sistem buku tanah dan surat ukur</strong>: Dokumen-dokumen pendukung kepemilikan tanah</li>
+                        <li><strong>Pencegahan konflik</strong>: Peran sertipikat tanah dalam mencegah sengketa kepemilikan</li>
+                        <li><strong>Kewajiban pendaftaran tanah</strong>: Kewajiban pemilik tanah untuk mendaftarkan tanahnya</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Konflik Tanah</h3>
+                    <p>PP ini menjadi penting dalam pencegahan konflik tanah melalui sistem pendaftaran yang jelas dan teratur.</p>
+                `,
+                downloadUrl: 'files/pp_no_24_1997.pdf'
+            },
+            'uu2-2012': {
+                title: 'Undang-Undang No. 2 Tahun 2012 tentang Pengadaan Tanah untuk Pembangunan',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Undang-undang ini mengatur pengadaan tanah yang sering menjadi sumber sengketa pertanahan.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Prinsip pengadaan tanah yang adil</strong>: Prinsip keadilan dan kemanusiaan dalam pengadaan tanah</li>
+                        <li><strong>Kompensasi</strong>: Ketentuan tentang ganti rugi yang layak</li>
+                        <li><strong>Mekanisme musyawarah</strong>: Penyelesaian melalui musyawarah untuk mencapai kesepakatan</li>
+                        <li><strong>Penyelesaian sengketa</strong>: Mekanisme penyelesaian sengketa pengadaan tanah</li>
+                        <li><strong>Peran pemerintah daerah</strong>: Peran aktif pemerintah daerah dalam proses pengadaan tanah</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Sengketa Tanah</h3>
+                    <p>UU ini menjadi dasar hukum dalam penyelesaian sengketa yang timbul dari proses pengadaan tanah untuk pembangunan.</p>
+                `,
+                downloadUrl: 'files/uu_no_2_2012.pdf'
+            },
+            'permen15-2024': {
+                title: 'Peraturan Menteri ATR/BPN No.15 tahun 2024 tentang Pencegahan Kasus Pertanahan',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Peraturan ini mengatur strategi pencegahan kasus pertanahan di Indonesia.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Identifikasi kasus</strong>: Metode identifikasi potensi kasus pertanahan</li>
+                        <li><strong>Pengkajian hasil identifikasi</strong>: Analisis terhadap kasus yang teridentifikasi</li>
+                        <li><strong>Penyusunan rekomendasi</strong>: Langkah-langkah pencegahan berdasarkan hasil kajian</li>
+                        <li><strong>Strategi pencegahan</strong>: Berbagai pendekatan untuk mencegah kasus pertanahan</li>
+                        <li><strong>Pemantauan dan evaluasi</strong>: Mekanisme evaluasi efektivitas pencegahan</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Konflik Tanah</h3>
+                    <p>Permen ini menjadi pedoman dalam pencegahan konflik pertanahan melalui pendekatan proaktif.</p>
+                `,
+                downloadUrl: 'files/permen_atr_15_2024.pdf'
+            },
+            'permen21-2020': {
+                title: 'Peraturan Menteri ATR/BPN No. 21 Tahun 2020 tentang Penanganan Konflik Pertanahan',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Peraturan ini mengatur mekanisme penyelesaian konflik pertanahan secara partisipatif dan berkeadilan.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Pendekatan partisipatif</strong>: Melibatkan semua pihak terkait dalam penyelesaian konflik</li>
+                        <li><strong>Peran mediator</strong>: Fungsi dan peran mediator dalam penyelesaian konflik</li>
+                        <li><strong>Mekanisme pengaduan</strong>: Proses pengaduan dan verifikasi keluhan</li>
+                        <li><strong>Musyawarah mufakat</strong>: Penyelesaian melalui musyawarah untuk mencapai kesepakatan</li>
+                        <li><strong>Teknologi</strong>: Pemanfaatan teknologi dalam resolusi konflik</li>
+                        <li><strong>Tim khusus</strong>: Pembentukan tim penanganan konflik strategis</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Konflik Tanah</h3>
+                    <p>Permen ini menjadi pedoman resmi dalam penanganan konflik pertanahan di Indonesia.</p>
+                `,
+                downloadUrl: 'files/permen_atr_21_2020.pdf'
+            },
+            'uu6-2023': {
+                title: 'Undang-Undang No. 6 Tahun 2023 tentang Cipta Kerja',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Undang-undang ini mengatur berbagai aspek termasuk pertanahan dalam kerangka cipta kerja.</p>
+                    
+                    <h3>Detail Isi (Aspek Pertanahan)</h3>
+                    <ul>
+                        <li><strong>Penyederhanaan perizinan</strong>: Penyederhanaan proses perizinan di sektor pertanahan</li>
+                        <li><strong>Percepatan pengadaan tanah</strong>: Mekanisme percepatan pengadaan tanah untuk pembangunan</li>
+                        <li><strong>Penyelesaian sengketa</strong>: Penyelesaian sengketa tanah strategis</li>
+                        <li><strong>Harmonisasi peraturan</strong>: Penyelarasan berbagai peraturan pertanahan</li>
+                        <li><strong>Masyarakat adat</strong>: Perlindungan hak masyarakat adat dalam pengelolaan tanah</li>
+                        <li><strong>Digitalisasi</strong>: Transformasi digital layanan pertanahan</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Sengketa Tanah</h3>
+                    <p>UU ini mempengaruhi berbagai aspek penyelesaian sengketa tanah melalui penyederhanaan dan percepatan proses.</p>
+                `,
+                downloadUrl: 'files/uu_no_6_2023.pdf'
+            },
+            'uu7-2012': {
+                title: 'Undang-Undang No. 7 Tahun 2012 tentang Penanganan Konflik Sosial',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Undang-undang ini mengatur penanganan konflik sosial termasuk yang bersumber dari sengketa pertanahan.</p>
+                    
+                    <h3>Detail Isi (Relevan dengan Pertanahan)</h3>
+                    <ul>
+                        <li><strong>Pencegahan konflik</strong>: Strategi pencegahan konflik berbasis tanah</li>
+                        <li><strong>Mekanisme penyelesaian</strong>: Prosedur penyelesaian konflik sosial</li>
+                        <li><strong>Peran pemerintah daerah</strong>: Peran aktif pemerintah daerah dalam resolusi konflik</li>
+                        <li><strong>Mediasi dan rekonsiliasi</strong>: Pendekatan mediasi untuk penyelesaian konflik</li>
+                        <li><strong>Pemulihan pasca konflik</strong>: Program pemulihan setelah terjadinya konflik</li>
+                        <li><strong>Perlindungan korban</strong>: Perlindungan terhadap korban konflik pertanahan</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Konflik Tanah</h3>
+                    <p>UU ini menjadi dasar hukum dalam penanganan konflik sosial yang bersumber dari sengketa pertanahan.</p>
+                `,
+                downloadUrl: 'files/uu_no_7_2012.pdf'
+            },
+            'pp18-2021': {
+                title: 'Peraturan Pemerintah No. 18 Tahun 2021 tentang Hak Pengelolaan dan Pendaftaran Tanah',
+                content: `
+                    <h3>Tentang Peraturan</h3>
+                    <p>Peraturan terbaru tentang pendaftaran tanah untuk mencegah konflik di Indonesia.</p>
+                    
+                    <h3>Detail Isi</h3>
+                    <ul>
+                        <li><strong>Penyederhanaan prosedur</strong>: Penyederhanaan proses pendaftaran tanah</li>
+                        <li><strong>Hak pengelolaan</strong>: Pengaturan hak pengelolaan tanah oleh negara</li>
+                        <li><strong>Rumah susun</strong>: Ketentuan khusus tentang pendaftaran rumah susun</li>
+                        <li><strong>Sertipikat elektronik</strong>: Penerbitan sertipikat tanah dalam bentuk digital</li>
+                        <li><strong>Klaim ganda</strong>: Penyelesaian masalah klaim ganda atas tanah</li>
+                        <li><strong>Sistem informasi</strong>: Integrasi sistem informasi pertanahan nasional</li>
+                    </ul>
+                    
+                    <h3>Relevansi dengan Konflik Tanah</h3>
+                    <p>PP ini menjadi dasar hukum dalam pencegahan konflik melalui sistem pendaftaran tanah yang lebih modern dan terintegrasi.</p>
+                `,
+                downloadUrl: 'files/pp_no_18_2021.pdf'
+            }
+        };
+
+        // Fungsi untuk memfilter peraturan
+        function filterRegulations() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            let hasVisibleCards = false;
+            
+            regulationCards.forEach(card => {
+                const categories = card.dataset.categories.split(' ');
+                const cardText = card.textContent.toLowerCase();
+                
+                // Filter berdasarkan kategori dan pencarian
+                const matchesFilter = activeFilter === 'all' || categories.includes(activeFilter);
+                const matchesSearch = searchTerm === '' || cardText.includes(searchTerm);
+                
+                if (matchesFilter && matchesSearch) {
+                    card.style.display = 'block';
+                    hasVisibleCards = true;
                 } else {
-                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                    card.style.display = 'none';
                 }
-                isLayersListExpanded = !isLayersListExpanded;
-                newLayersListHeight()
-            }); 
+            });
             
-            if (controlLayersElement) {
-                controlLayersElement.addEventListener('click', function(event) {
-                    var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
-                    if (toggleLayerHeaderPointer) {
-                        newLayersListHeight();
-                    }
-                });
+            // Tampilkan pesan jika tidak ada hasil
+            showNoResultsMessage(!hasVisibleCards);
+        }
+        
+        // Fungsi untuk menampilkan pesan tidak ada hasil
+        function showNoResultsMessage(show) {
+            let noResultsDiv = document.querySelector('.no-results');
+            
+            if (show) {
+                if (!noResultsDiv) {
+                    noResultsDiv = document.createElement('div');
+                    noResultsDiv.className = 'no-results';
+                    noResultsDiv.innerHTML = `
+                        <i class="fas fa-search"></i>
+                        <h3>Tidak ditemukan hasil</h3>
+                        <p>Tidak ada peraturan yang sesuai dengan kriteria pencarian Anda</p>
+                    `;
+                    regulationGrid.appendChild(noResultsDiv);
+                }
+            } else if (noResultsDiv) {
+                noResultsDiv.remove();
             }
-            
-            setTimeout(function() {
-                toggleLayerControl.click();
-            }, 10);
-            setTimeout(function() {
-                toggleLayerControl.click();
-            }, 10);
-            
-            var isSmallScreen = window.innerWidth < 650;
-            if (isSmallScreen) {
-                setTimeout(function() {
-                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
-                    isLayersListExpanded = !isLayersListExpanded;
-                }, 500);
-            }  
-        });       
+        }
         
-        setBounds();
+        // Event listener untuk tombol filter
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                filterRegulations();
+            });
+        });
         
-        // ========== FITUR PENCARIAN YANG DITINGKATKAN ==========
+        // Event listener untuk pencarian
+        searchInput.addEventListener('input', filterRegulations);
         
-        // Buat custom search control
-        var CustomSearchControl = L.Control.extend({
-            options: {
-                position: 'topright',
-                placeholder: 'Cari Nomor Perkara...',
-                tooltip: 'Masukkan nomor perkara untuk mencari bidang tanah'
-            },
-            
-            onAdd: function(map) {
-                var container = L.DomUtil.create('div', 'custom-search');
-                
-                // Input field
-                this._input = L.DomUtil.create('input', 'search-input', container);
-                this._input.type = 'text';
-                this._input.placeholder = this.options.placeholder;
-                this._input.title = this.options.tooltip;
-                
-                // Search button
-                this._button = L.DomUtil.create('button', 'search-button', container);
-                this._button.innerHTML = '<i class="fa fa-search"></i>';
-                this._button.title = 'Cari';
-                
-                // Tooltip
-                this._tooltip = L.DomUtil.create('div', 'search-tooltip', container);
-                this._tooltip.style.display = 'none';
-                this._tooltip.innerHTML = this.options.tooltip;
-                
-                // Event listeners
-                L.DomEvent.on(this._input, 'keypress', this._onKeyPress, this);
-                L.DomEvent.on(this._button, 'click', this._search, this);
-                L.DomEvent.on(this._input, 'focus', this._showTooltip, this);
-                L.DomEvent.on(this._input, 'blur', this._hideTooltip, this);
-                
-                L.DomEvent.disableClickPropagation(container);
-                return container;
-            },
-            
-            _onKeyPress: function(e) {
-                if (e.keyCode === 13) {
-                    this._search();
-                }
-            },
-            
-            _showTooltip: function() {
-                this._tooltip.style.display = 'block';
-            },
-            
-            _hideTooltip: function() {
-                this._tooltip.style.display = 'none';
-            },
-            
-            _search: function() {
-                var searchValue = this._input.value.trim();
-                if (!searchValue) return;
-                
-                var found = false;
-                layer_bidang_2.eachLayer(function(layer) {
-                    if (layer.feature.properties['No Perkara'] && 
-                        layer.feature.properties['No Perkara'].toString().toLowerCase().includes(searchValue.toLowerCase())) {
-                        highlightFoundFeature(layer);
-                        found = true;
-                    }
-                });
-                
-                if (!found) {
-                    alert('Nomor perkara "' + searchValue + '" tidak ditemukan.');
-                }
+        // Fungsi untuk membuka modal
+        function openModal(regulationId) {
+            const regulation = regulationsData[regulationId];
+            if (regulation) {
+                modalTitle.textContent = regulation.title;
+                modalBody.innerHTML = regulation.content;
+                modalDownloadBtn.href = regulation.downloadUrl;
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        // Event listener untuk tombol lihat
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const regulationId = this.getAttribute('data-id');
+                openModal(regulationId);
+            });
+        });
+        
+        // Event listener untuk menutup modal
+        closeModal.addEventListener('click', function() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        });
+        
+        // Tutup modal ketika klik di luar area modal
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
             }
         });
         
-        // Tambahkan custom search control ke peta
-        var customSearch = new CustomSearchControl();
-        map.addControl(customSearch);
-        
-        // Tambahkan juga search control default untuk alternatif
-        var defaultSearch = new L.Control.Search({
-            layer: layer_bidang_2,
-            initial: false,
-            hideMarkerOnCollapse: true,
-            propertyName: 'No Perkara',
-            position: 'topright',
-            textErr: 'Nomor perkara tidak ditemukan',
-            textPlaceholder: 'Cari nomor perkara...',
-            marker: false
-        });
-        
-        defaultSearch.on('search:locationfound', function(e) {
-            highlightFoundFeature(e.layer);
-        });
-        
-        map.addControl(defaultSearch);
-        
-        // Sesuaikan tampilan default search control
-        document.querySelector('.search-button').className += ' fa fa-search';
-        document.querySelector('.search-input').style.width = '200px';
-        document.querySelector('.search-input').style.padding = '8px';
-        </script>
-    </body>
-</html>
+        // Filter awal saat halaman dimuat
+        filterRegulations();
+    });
+</script>
